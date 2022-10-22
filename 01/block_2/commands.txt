@@ -1,0 +1,36 @@
+hdfs dfsadmin -safemode leave
+
+docker cp m_mean.py namenode:/ 
+docker cp m_variance.py namenode:/
+docker cp r_mean.py namenode:/
+docker cp r_variance.py namenode:/
+docker cp AB_NYC_2019.csv namenode:/
+docker exec -it namenode /bin/bash
+
+hdfs dfs -put m_mean.py m_variance.py r_mean.py r_variance.py AB_NYC_2019.csv /
+
+hadoop jar /opt/hadoop-3.2.1/share/hadoop/tools/lib/hadoop-streaming-3.2.1.jar -file m_mean.py -file r_mean.py -mapper "python m_mean.py" -reducer r_mean.py -input /AB_NYC_2019.csv -output /output
+
+hdfs dfs -rm -r /output && hadoop jar /opt/hadoop-3.2.1/share/hadoop/tools/lib/hadoop-streaming-3.2.1.jar -file m_variance.py -file r_variance.py -mapper m_variance.py -reducer r_variance.py -input /AB_NYC_2019.csv -output /output
+
+
+
+
+
+
+
+
+
+
+
+
+apt update -y \
+&& apt install -y wget build-essential libreadline-gplv2-dev libncursesw5-dev \
+     libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev \
+&& mkdir -p /opt/python \
+&& cd /opt/python \
+&& wget -q https://www.python.org/ftp/python/3.10.8/Python-3.10.8.tgz \
+&& tar xzf Python-3.10.8.tgz \
+&& cd Python-3.10.8 \
+&& ./configure --enable-optimizations \
+&& make -j10 altinstall
